@@ -3,8 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { BookmarkEntity, UserEntity } from './typeorm';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([]),
+    TypeOrmModule.forFeature([UserEntity, BookmarkEntity]),
   ],
   controllers: [AppController],
   providers: [AppService],

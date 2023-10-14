@@ -18,8 +18,8 @@ export class BookmarkEntity {
   imageUrl: string;
 
   @Column()
-  createdAt: string;
+  createdAt: Date;
 
   @Column()
-  updatedAt: string;
+  updatedAt: Date;
 }
