@@ -3,7 +3,7 @@ import { AppModule } from '../src/app.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as pactum from 'pactum';
 import { AppService } from '../src/app.service';
-import { LoginDto, RegisterDto } from 'src/dtos';
+import { BookmarkDto, LoginDto, RegisterDto } from 'src/dtos';
 
 describe('app e2e', () => {
   let dbService: AppService;
@@ -35,7 +35,7 @@ describe('app e2e', () => {
     const regiterDto: RegisterDto = {
       email: 'test@test.com',
       password: '1234321',
-      access: 95,
+      access: 100,
       name: 'test',
     };
 
@@ -167,11 +167,128 @@ describe('app e2e', () => {
   });
 
   describe('Bookmark', () => {
-    describe('create a bookmark', () => {});
-    describe('update a bookmark with Id', () => {});
-    describe('Get all bookmarks', () => {});
-    describe('Get a bookmark by id', () => {});
-    describe('Delete a bookmark by Id', () => {});
+    const dto: BookmarkDto = {
+      urlParam: 'test',
+      description: 'this is a test',
+      title: 'test-1',
+    };
+    describe('create a bookmark', () => {
+      it('should create a bookmark', () => {
+        return pactum
+          .spec()
+          .post(`bookmarks/create`)
+          .withBody(dto)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(201)
+          .stores('bookmarkId', 'id');
+      });
+
+      it('no body should throw error', () => {
+        return pactum
+          .spec()
+          .post(`bookmarks/create`)
+          .withBearerToken('$S{accessToken}')
+          .withBody({ title: dto.title, description: dto.description })
+          .expectStatus(400);
+      });
+
+      it('no urlParam should throw error', () => {
+        return pactum
+          .spec()
+          .post(`bookmarks/create`)
+          .withBearerToken('$S{accessToken}')
+          .withBody({ title: dto.title, description: dto.description })
+          .expectStatus(400);
+      });
+
+      it('no auth should throw error', () => {
+        return pactum
+          .spec()
+          .post(`bookmarks/create`)
+          .withBody(dto)
+          .expectStatus(401);
+      });
+    });
+
+    describe('Get all bookmarks', () => {
+      it('should return all bookmarks', () => {
+        return pactum
+          .spec()
+          .get(`bookmarks`)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(200);
+      });
+
+      it('no auth should throw error', () => {
+        return pactum.spec().get(`bookmarks`).expectStatus(401);
+      });
+    });
+
+    describe('Get a bookmark by id', () => {
+      it('should return a bookmark', () => {
+        return pactum
+          .spec()
+          .get(`bookmarks/$S{bookmarkId}`)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(200);
+      });
+
+      it('no auth should throw error', () => {
+        return pactum.spec().get(`bookmarks/$S{bookmarkId}`).expectStatus(401);
+      });
+    });
+
+    describe('update a bookmark with Id', () => {
+      it('should update a bookmark', () => {
+        return pactum
+          .spec()
+          .put(`bookmarks/update/$S{bookmarkId}`)
+          .withBearerToken('$S{accessToken}')
+          .withBody({ title: 'new title', description: 'new description' })
+          .expectStatus(200);
+      });
+
+      it('no body, shouldn"t throw', () => {
+        return pactum
+          .spec()
+          .put(`bookmarks/update/$S{bookmarkId}`)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(200);
+      });
+
+      it('no auth should throw error', () => {
+        return pactum
+          .spec()
+          .put(`bookmarks/update/$S{bookmarkId}`)
+          .withBody({ title: 'new title', description: 'new description' })
+          .expectStatus(401);
+      });
+    });
+
+    describe('Delete a bookmark by Id', () => {
+      it('access < 100, should throw', () => {
+        return pactum
+          .spec()
+          .delete(`bookmarks/$S{bookmarkId}`)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(403);
+      });
+
+      it('no auth should throw error', () => {
+        return pactum
+          .spec()
+          .delete(`bookmarks/$S{bookmarkId}`)
+          .expectStatus(401);
+      });
+
+      it('should delete a bookmark', () => {
+        return pactum
+          .spec()
+          .delete(`bookmarks/$S{bookmarkId}`)
+          .withBearerToken('$S{accessToken}')
+          .expectStatus(200);
+      });
+    });
   });
   it.todo(' test');
 });

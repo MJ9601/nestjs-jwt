@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { BookmarksService } from './bookmarks.service';
 import { BookmarkDto } from '../dtos';
-import { AccessGuard, JwtGuard } from 'src/auth/guards';
-import { GetUser } from 'src/auth/decorators';
-import { UserEntity } from 'src/typeorm';
+import { AccessGuard, JwtGuard } from '../auth/guards';
+import { GetUser } from '../auth/decorators';
+import { UserEntity } from '../typeorm';
 
 @Controller('bookmarks')
 @UseGuards(JwtGuard)
@@ -55,7 +55,7 @@ export class BookmarksController {
   }
 
   @Delete(':id')
-  @UseGuards(new AccessGuard(90))
+  @UseGuards(new AccessGuard(100))
   async deleteBookmarkById(@Param('id') id: number) {
     try {
       const deletedItem = await this.bookmarkService.deleteBookmark(id);
