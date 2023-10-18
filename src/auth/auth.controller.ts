@@ -8,10 +8,15 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  UseGuards,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from 'src/dtos/register.dto';
-import { LoginDto } from 'src/dtos/login.dto';
+import { RegisterDto, LoginDto } from '../dtos';
+import { AccessGuard, JwtGuard } from './guards';
+import { GetUser } from './decorators';
+import { UserEntity } from '../typeorm';
 
 @Controller('auth')
 export class AuthController {
@@ -54,6 +59,7 @@ export class AuthController {
   }
 
   @Delete('users/:id')
+  @UseGuards(JwtGuard, new AccessGuard(90))
   async deleteUser(@Param(':id') id: number) {
     try {
       const user = await this.authService.deleteUserById(id);
@@ -61,5 +67,14 @@ export class AuthController {
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  @Get('me')
+  @UseGuards(JwtGuard, new AccessGuard(11))
+  async getMe(
+    @GetUser() user: Omit<UserEntity, 'password'>,
+    @GetUser('id') id: number,
+  ) {
+    return { user, id };
   }
 }

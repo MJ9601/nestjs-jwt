@@ -7,11 +7,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { BookmarkEntity, UserEntity } from './typeorm';
 
+const envFilePath = process.env.NODE_ENV == 'test' ? './.env.test' : './.env';
+
 @Module({
   imports: [
     AuthModule,
     BookmarksModule,
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: './.env' }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

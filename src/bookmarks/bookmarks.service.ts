@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BookmarkDto } from 'src/dtos';
-import { BookmarkEntity, UserEntity } from 'src/typeorm';
+import { BookmarkDto } from '../dtos';
+import { BookmarkEntity, UserEntity } from '../typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -25,17 +29,21 @@ export class BookmarksService {
     return this.bookmarkRepository.findOneBy({ urlParam });
   }
 
-  async createNewBookmark(input: BookmarkDto) {
+  async createNewBookmark(input: BookmarkDto, userId: number) {
     const bookmark = await this.bookmarkRepository.findOneBy({
       urlParam: input.urlParam,
     });
 
-    if (bookmark) return false;
+    if (bookmark) throw new ConflictException('urlParam is taken!!');
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not Found!!');
 
     const newBookmark = this.bookmarkRepository.create({
       ...input,
       createdAt: new Date(),
       updatedAt: new Date(),
+      user,
     });
 
     return this.bookmarkRepository.save(newBookmark);

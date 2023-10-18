@@ -1,15 +1,19 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserEntity } from 'src/typeorm';
+import { UserEntity } from '../typeorm';
 import { LoginDto, RegisterDto } from 'src/dtos';
 import * as argon from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async findAllUsers() {
@@ -36,9 +40,13 @@ export class AuthService {
     const user = await this.findUserByEmail(input.email);
 
     if (user) throw new ConflictException('Invalid Email Or Password!!');
+    let { password, ...rest } = input;
+
+    password = await argon.hash(password);
 
     const newUser = this.userRepository.create({
-      ...input,
+      ...rest,
+      password,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -49,6 +57,11 @@ export class AuthService {
   async loginUser(input: Readonly<LoginDto>) {
     const user = await this.validateUserInfo(input);
     if (!user) throw new ConflictException('Invalid Email Or Password!!');
+
+    const { password, ...rest } = user;
+    const accessToken = await this.signToken(rest);
+
+    return { accessToken };
   }
 
   async deleteUserById(id: number) {
@@ -58,5 +71,12 @@ export class AuthService {
     const deleteUser = await this.userRepository.delete({ id: user.id });
 
     return true;
+  }
+
+  async signToken(payload) {
+    return this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+      secret: this.configService.get('JWT_SECRET'),
+    });
   }
 }

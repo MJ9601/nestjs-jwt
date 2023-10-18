@@ -1,14 +1,16 @@
-import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
   @IsNotEmpty()
-  email:string
-
+  email: string;
 
   @IsString()
-  name?:string
+  name?: string;
 
   @IsNotEmpty()
-  password:string
+  password: string;
+
+  @IsNumber()
+  access: number;
 }

@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+} from 'typeorm';
+import { BookmarkEntity } from './bookmark.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -19,4 +26,13 @@ export class UserEntity {
 
   @Column()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  access: number;
+
+  @OneToMany(() => BookmarkEntity, (bookmark) => bookmark.user, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  bookmarks?: BookmarkEntity[];
 }

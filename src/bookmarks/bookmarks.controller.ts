@@ -11,7 +11,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { BookmarksService } from './bookmarks.service';
-import { BookmarkDto } from 'src/dtos';
+import { BookmarkDto } from '../dtos';
 
 @Controller('bookmarks')
 export class BookmarksController {
@@ -20,7 +20,7 @@ export class BookmarksController {
   @Post('create')
   async createNewBookmark(@Body() input: BookmarkDto) {
     try {
-      return this.bookmarkService.createNewBookmark(input);
+      return this.bookmarkService.createNewBookmark(input, 1);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
