@@ -9,39 +9,40 @@ import {
   Delete,
   Body,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { BookmarksService } from './bookmarks.service';
 import { BookmarkDto } from '../dtos';
+import { AccessGuard, JwtGuard } from 'src/auth/guards';
+import { GetUser } from 'src/auth/decorators';
+import { UserEntity } from 'src/typeorm';
 
 @Controller('bookmarks')
+@UseGuards(JwtGuard)
 export class BookmarksController {
   constructor(private readonly bookmarkService: BookmarksService) {}
 
   @Post('create')
-  async createNewBookmark(@Body() input: BookmarkDto) {
-    try {
-      return this.bookmarkService.createNewBookmark(input, 1);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  async createNewBookmark(
+    @Body() input: BookmarkDto,
+    @GetUser() user: Omit<UserEntity, 'password'>,
+  ) {
+    return this.bookmarkService.createNewBookmark(input, user.id);
   }
 
   @Get(':id')
   async getBookmarkById(@Param('id') id: number) {
-    try {
-      return this.bookmarkService.findBookMarkById(id);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return this.bookmarkService.findBookMarkById(id);
   }
 
   @Put('update/:id')
-  async updateBookmark(@Body() input: BookmarkDto, @Param('id') id: number) {
-    try {
-      return this.bookmarkService.updateBookmark(id, input);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  async updateBookmark(
+    @Body() input: Partial<BookmarkDto>,
+    @Param('id') id: number,
+    @GetUser() user: Omit<UserEntity, 'password'>,
+  ) {
+    console.log({ id, input, userId: user.id });
+    return this.bookmarkService.updateBookmark(+id, input, user.id);
   }
 
   @Get()
@@ -54,6 +55,7 @@ export class BookmarksController {
   }
 
   @Delete(':id')
+  @UseGuards(new AccessGuard(90))
   async deleteBookmarkById(@Param('id') id: number) {
     try {
       const deletedItem = await this.bookmarkService.deleteBookmark(id);

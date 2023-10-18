@@ -1,4 +1,10 @@
-import { Entity, PrimaryColumn, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+} from 'typeorm';
 import { UserEntity } from './user.entity';
 
 @Entity('bookmarks')
@@ -15,7 +21,7 @@ export class BookmarkEntity {
   @Column('varchar', { length: 150 })
   description: string;
 
-  @Column('varchar', { length: 90 })
+  @Column('varchar', { length: 90, nullable: true })
   imageUrl: string;
 
   @Column()
@@ -24,7 +30,6 @@ export class BookmarkEntity {
   @Column()
   updatedAt: Date;
 
-
-@ManyToOne(() => UserEntity, user => user.bookmarks)
-user?:UserEntity
+  @ManyToOne(() => UserEntity, (user) => user.bookmarks)
+  user?: UserEntity;
 }

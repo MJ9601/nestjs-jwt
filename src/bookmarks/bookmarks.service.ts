@@ -2,6 +2,9 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookmarkDto } from '../dtos';
@@ -22,7 +25,10 @@ export class BookmarksService {
   }
 
   async findBookMarkById(id: number) {
-    return this.bookmarkRepository.findOneBy({ id });
+    return this.bookmarkRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
   }
 
   async findBookMarkByUrl(urlParam: string) {
@@ -30,34 +36,50 @@ export class BookmarksService {
   }
 
   async createNewBookmark(input: BookmarkDto, userId: number) {
-    const bookmark = await this.bookmarkRepository.findOneBy({
-      urlParam: input.urlParam,
-    });
+    try {
+      const bookmark = await this.bookmarkRepository.findOneBy({
+        urlParam: input.urlParam,
+      });
 
-    if (bookmark) throw new ConflictException('urlParam is taken!!');
+      if (bookmark) throw new ConflictException('urlParam is taken!!');
 
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('User not Found!!');
+      const user = await this.userRepository.findOneBy({ id: userId });
+      if (!user) throw new NotFoundException('User not Found!!');
 
-    const newBookmark = this.bookmarkRepository.create({
-      ...input,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      user,
-    });
+      const newBookmark = this.bookmarkRepository.create({
+        ...input,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user,
+      });
 
-    return this.bookmarkRepository.save(newBookmark);
+      return this.bookmarkRepository.save(newBookmark);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  async updateBookmark(id: number, input: BookmarkDto) {
-    const bookmark = await this.findBookMarkById(id);
-    if (!bookmark) return false;
-    const updatedBookmark = await this.bookmarkRepository.update(
-      { id },
-      { ...input, updatedAt: new Date() },
-    );
+  async updateBookmark(
+    id: number,
+    input: Partial<BookmarkDto>,
+    userId: number,
+  ) {
+    try {
+      const bookmark = await this.findBookMarkById(id);
+      if (!bookmark) throw new NotFoundException('Bookmark Not Found!!');
 
-    return this.findBookMarkById(id);
+      if (bookmark.user.id !== userId)
+        throw new ForbiddenException('Not Allowed!!');
+
+      const updatedBookmark = await this.bookmarkRepository.update(
+        { id },
+        { ...input, updatedAt: new Date() },
+      );
+
+      return this.findBookMarkById(id);
+    } catch (err) {
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async deleteBookmark(id: number) {
